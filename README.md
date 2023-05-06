@@ -7,3 +7,9 @@ This repository has the following layout:
 - ``imagesig``: a package containing all functionality related to the image signature preprocessing calculations. 
 - ``model``: a package containing implementations of the neural networks used to evaluate the performance of ImageSig.
 - ``util``: general-purpose utility methods. 
+
+## Related Resources
+[Original ImageSig Implementation](https://github.com/urbanist-ai/ImageSig)
+
+[Signature Transforms](https://github.com/patrick-kidger/signatory)
+
