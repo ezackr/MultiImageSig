@@ -6,7 +6,7 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 
-data_path: str = os.environ["PWD"] + "/../../../data"
+data_path: str = os.path.dirname(__file__).rstrip("/src/main/util/data.py") + "/data"
 
 
 def _get_transform():
