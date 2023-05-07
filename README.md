@@ -11,7 +11,9 @@ This repository has the following layout:
 - ``util``: general-purpose utility methods.
 
 ## Related Resources
-[Original ImageSig Implementation](https://github.com/urbanist-ai/ImageSig)
+[ImageSig](https://github.com/urbanist-ai/ImageSig): The original implementation of ImageSig
 
-[Signature Transforms](https://github.com/patrick-kidger/signatory)
+[Signatory](https://github.com/patrick-kidger/signatory): The package used by ImageSig to create image signatures.
+
+[IISignature](https://github.com/bottler/iisignature): Additional library with other helpful methods for creating signatures.
 
