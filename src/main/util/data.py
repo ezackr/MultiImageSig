@@ -1,8 +1,12 @@
+import os
 from typing import Tuple
 
 from torch.utils.data import Dataset
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+
+
+data_path: str = os.environ["PWD"] + "/../../../data"
 
 
 def _get_transform():
@@ -26,10 +30,10 @@ def load_cifar10() -> Tuple[Dataset, Dataset]:
     transform = _get_transform()
     # load training data.
     train_data = datasets.CIFAR10(
-        root="./data", train=True, download=True, transform=transform
+        root=data_path, train=True, download=True, transform=transform
     )
     # load test data.
     test_data = datasets.CIFAR10(
-        root="./data", train=False, download=True, transform=transform
+        root=data_path, train=False, download=True, transform=transform
     )
     return train_data, test_data
