@@ -1,7 +1,7 @@
 import signatory
 
 
-class Signature(object):
+class Signature:
     """Signature transform on image tensor
 
     Args:
@@ -9,7 +9,7 @@ class Signature(object):
     """
 
     def __init__(self, depth):
-        assert isinstance(depth, (int))
+        assert isinstance(depth, int)
         self.depth = depth
 
     def __call__(self, sample):
