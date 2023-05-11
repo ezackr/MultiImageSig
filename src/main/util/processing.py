@@ -2,7 +2,8 @@ import signatory
 
 
 class Signature:
-    """Signature transform on image tensor
+    """
+    Signature transform on image tensor
 
     Args:
         depth (int): Depth used for signature
