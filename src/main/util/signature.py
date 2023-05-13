@@ -15,6 +15,12 @@ class Signature:
         self.depth = depth
 
     def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        """
+        :param image: tensor representation of an image with shape (C x H x W)
+        :return: a signature representation of an image.
+        """
+        # change shape to (H x W x C).
+        image = image.permute(1, 2, 0)
         signatures = []
         for stream in image:
             sig = torch.as_tensor(iisignature.sig(stream, self.depth))
