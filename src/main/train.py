@@ -1,14 +1,12 @@
-from src.main.util.data import load_cifar10
-from .models.cnn import CNN
-from .models.fc import FC
-from .models.transformer import Encoder
+from typing import Tuple
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
+
+from src.main.models import CNN, Encoder, FC
+from src.main.util import load_cifar10
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -27,58 +25,66 @@ def accuracy(model: nn.Module, dataset_loader: DataLoader):
     return correct / total
 
 
-def train(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader, epochs: int = 10, lr: float = 0.01,
-          momentum: float = 0.1, weight_decay: float = 0.05):
-    # Train the model on train_loader with given hyperparameters, computing accuracy on eval_loader
+def train(
+        model: nn.Module,
+        train_loader: DataLoader,
+        val_loader: DataLoader,
+        epochs: int = 10,
+        lr: float = 0.01,
+        momentum: float = 0.1,
+        weight_decay: float = 0.05
+):
     model.to(device)
-
-    # set up loss and optimization
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
-    training_losses = []
-
-    for epoch in range(epochs):
-        running_loss = 0.0
-
-        for i, data in enumerate(train_loader, 0):
-            inputs, labels = data[0].to(device), data[1].to(device)
+    train_losses = []
+    for i in range(epochs):
+        model.train()
+        total_loss = 0.0
+        for x, y in train_loader:
+            inputs, labels = x.to(device), y.to(device)
 
             optimizer.zero_grad()
 
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            pred = model(inputs)
+            loss = criterion(pred, labels)
             loss.backward()
             optimizer.step()
 
-            running_loss += loss.item()
-            training_losses.append(loss.item())
-
-            if i % 10 == 9:
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 10))
-                running_loss = 0.0
-        print("Epoch %d. Eval accuracy=%f%%" % (epoch + 1, accuracy(model, eval_loader)))
-
-    return training_losses
+            total_loss += loss.item()
+        train_losses.append(total_loss / len(train_loader))
+        print(f"Epoch {i}. Train Loss={train_losses[-1]}. Validation Accuracy={accuracy(model, val_loader)}")
+    return train_losses
 
 
-if __name__ == "__main__":
-    depth = 3
-    batch_size = 64
-
-    # Load data, split into train/validation/test, and create DataLoaders
-    trainval_data, test_data = load_cifar10(3)
-    train_data, val_data = random_split(trainval_data, [int(0.9 * len(trainval_data)), int(0.1 * trainval_data)])
+def _get_cifar_data(depth: int, batch_size: int) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
+    train_val_data, test_data = load_cifar10(depth=depth)
+    train_data, val_data = random_split(
+        train_val_data,
+        [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
+    )
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+    return train_data[0][0].shape, train_loader, val_loader, test_loader
+
+
+def main():
+    depth: int = 4
+    batch_size: int = 64
+
+    # Load dataset, split into train/validation/test sets, and create DataLoaders.
+    input_shape, train_loader, val_loader, test_loader = _get_cifar_data(depth, batch_size)
 
     # Initialize models
-    inputDim = train_data[0][0].size()
-    fc_model = FC(inputDim)
-    cnn_model = CNN(inputDim)
-    # transformer_model = Transformer()
+    fc_model = FC(input_shape)
+    cnn_model = CNN(input_shape)
+    attn_model = Encoder(input_shape[1])
 
     print("Training fully-connected model")
     train(fc_model, train_loader, val_loader)
+
+
+if __name__ == "__main__":
+    main()
