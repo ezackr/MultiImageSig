@@ -42,6 +42,7 @@ class Encoder(nn.Module):
     A sequence of EncoderBlocks used to create an encoder.
 
     Parameters:
+        - input_dim (int): the dimension of the input.
         - num_layers (int): number of encoder blocks.
         - d_model (int): dimension of input.
         - num_heads (int): number of attention heads.
@@ -51,25 +52,28 @@ class Encoder(nn.Module):
     """
     def __init__(
             self,
+            input_dim: int,
             num_layers: int = 6,
             d_model: int = 512,
             num_heads: int = 8,
             num_classes: int = 10,
-            max_len: int = 1024,
+            max_len: int = 64,
             dropout: float = 0.1
     ):
         super(Encoder, self).__init__()
+        self.linear_in = nn.Linear(input_dim, d_model)
         self.positional_encoding = PositionalEncoding(max_len, d_model)
         self.blocks = nn.ModuleList([
           EncoderBlock(d_model, num_heads, dropout)
           for _ in range(num_layers)
         ])
-        self.linear = nn.Linear(d_model, num_classes)
+        self.linear_out = nn.Linear(d_model, num_classes)
 
     def forward(self, x: torch.Tensor):
-        x_enc = self.positional_encoding(x)
+        x_in = self.linear_in(x)
+        x_enc = self.positional_encoding(x_in)
         for block in self.blocks:
             x_enc = block(x_enc)
-        x_out = self.linear(x_enc)
+        x_out = self.linear_out(x_enc)
         x_out = F.softmax(x_out)
         return x_out
