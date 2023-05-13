@@ -11,8 +11,8 @@ class CNN(nn.Module):
     def __init__(self, inputDim: Tuple[int, int], hiddenN: int = 50, numClasses: int = 10):
         super(CNN, self).__init__()
         # TODO: implement correct filters
-        self.conv1 = nn.Conv1d(3, 32, kernel_size=3)
-        self.conv2 = nn.Conv1d(32, 64, kernel_size=3)
+        self.conv1 = nn.Conv1d(3, 32, kernel_size=(3,))
+        self.conv2 = nn.Conv1d(32, 64, kernel_size=(3,))
         self.fc1 = nn.Linear(inputDim[0] * inputDim[1], hiddenN)
         self.fc2 = nn.Linear(hiddenN, numClasses)
 
