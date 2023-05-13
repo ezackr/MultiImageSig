@@ -1,4 +1,4 @@
-from util.data import load_cifar10
+from src.main.util.data import load_cifar10
 from .models.cnn import CNN
 from .models.fc import FC
 from .models.transformer import Encoder
