@@ -38,3 +38,13 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
         root=data_path, train=False, download=True, transform=transform
     )
     return train_data, test_data
+
+
+def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
+    """
+    :param depth: the depth of the signature transform.
+    :return: the Concrete Cracks dataset represented by tensors.
+        - The first entry in the returned Tuple is the training data.
+        - The second entry in the returned Tuple is the test data.
+    """
+    pass

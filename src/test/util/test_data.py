@@ -1,4 +1,4 @@
-from src.main.util.data import load_cifar10
+from src.main.util.data import load_cifar10, load_concrete_cracks
 
 
 def test_load_cifar10():
@@ -18,3 +18,7 @@ def test_load_cifar10():
         "ship",
         "truck"
     ]
+
+
+def test_concrete_cracks():
+    pass
