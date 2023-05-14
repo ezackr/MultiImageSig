@@ -21,4 +21,6 @@ def test_load_cifar10():
 
 
 def test_concrete_cracks():
-    pass
+    train_data, test_data = load_concrete_cracks()
+    assert len(train_data) == 34000
+    assert len(test_data) == 6000
