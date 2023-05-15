@@ -66,9 +66,9 @@ def train(
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
         train_accuracies.append(accuracy(model, val_loader))
-        print(f"Epoch {epoch}. Train Loss={train_losses[-1]}. Validation Accuracy={train_accuracies[-1]}")
+        print(f"Epoch {epoch+1}. Train Loss={train_losses[-1]}. Validation Accuracy={train_accuracies[-1]}")
         if checkpoints_path is not None:
-            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch)
+            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1)
             checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
     return train_losses
 

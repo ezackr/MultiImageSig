@@ -10,7 +10,7 @@ import torchvision.transforms as transforms
 
 from src.main.util.signature import Signature
 
-data_path: str = os.path.join(os.path.dirname(__file__).rstrip("/src/main/util/data.py"), "data")
+data_path: str = os.path.join(os.path.dirname(__file__).rstrip(os.path.normpath("/src/main/util/data.py")), "data")
 
 
 def _load_cifar10_samples_labels(cifar10_dataset: datasets.CIFAR10, transform: transforms.Compose):
