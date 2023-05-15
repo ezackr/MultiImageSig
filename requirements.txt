@@ -2,3 +2,4 @@ numpy
 iisignature
 torch
 torchvision
+tqdm

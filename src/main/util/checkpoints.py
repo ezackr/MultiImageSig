@@ -3,7 +3,7 @@ import torch
 from torch import nn, optim
 
 
-def save_checkpoint(optimizer: optim.optimizer, model: nn.Module, checkpoint_path: str):
+def save_checkpoint(optimizer: optim.Optimizer, model: nn.Module, checkpoint_path: str):
     """
     Save checkpoint from optimizer and model into checkpoint_path
 
@@ -18,7 +18,7 @@ def save_checkpoint(optimizer: optim.optimizer, model: nn.Module, checkpoint_pat
         }, checkpoint_path)
 
 
-def load_checkpoint(optimizer: optim.optimizer, model: nn.Module, checkpoint_path: str):
+def load_checkpoint(optimizer: optim.Optimizer, model: nn.Module, checkpoint_path: str):
     """
     Load checkpoint into optimizer and model from checkpoint_path
 
