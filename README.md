@@ -26,7 +26,7 @@ Unit tests are stored under `src/test`.
 ## Datasets
 We use two datasets, CIFAR-10 and Concrete Cracks:
 - CIFAR-10 is available via PyTorch ([dataset information](https://www.cs.toronto.edu/~kriz/cifar.html))
-- Concrete Cracks is available for download via [Mendeley](https://data.mendeley.com/datasets/5y9wdsg2zt/2). Un-compressed data (`Negative` and `Positive` folders) should be placed into a folder named `concrete-cracks` in the root directory. 
+- Concrete Cracks is available for download via [Mendeley](https://data.mendeley.com/datasets/5y9wdsg2zt/2). Un-compressed data (`Negative` and `Positive` folders) should be placed into a folder named `data/concrete-crack` in the root directory. 
 
 ## Related Resources
 [ImageSig](https://github.com/urbanist-ai/ImageSig): The original implementation of ImageSig.

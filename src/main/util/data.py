@@ -14,6 +14,20 @@ from src.main.util.signature import Signature
 data_path: str = os.path.join(os.path.dirname(__file__).rstrip(os.path.normpath("/src/main/util/data.py")), "data")
 
 
+class CIFARSignature(TensorDataset):
+    classes = [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"
+    ]
+
 def _load_cifar10_samples_labels(cifar10_dataset: datasets.CIFAR10, transform: transforms.Compose):
     samples, labels = [], []
     for sample, label in tqdm(cifar10_dataset, desc="Processing dataset"):
@@ -48,7 +62,7 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
             train_labels = torch.load(os.path.join(artifacts_path, "train_labels.pt"))
             test_samples = torch.load(os.path.join(artifacts_path, "test_samples.pt"))
             test_labels = torch.load(os.path.join(artifacts_path, "test_labels.pt"))
-            return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
+            return CIFARSignature(train_samples, train_labels), CIFARSignature(test_samples, test_labels)
     except FileNotFoundError:
         os.makedirs(os.path.abspath(artifacts_path))
 
@@ -74,7 +88,7 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
     torch.save(test_labels, os.path.join(artifacts_path, "test_labels.pt"))
 
     # return new dataset.
-    return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
+    return CIFARSignature(train_samples, train_labels), CIFARSignature(test_samples, test_labels)
 
 
 def _load_sample_labels(root: str, label: int, depth: int = 4):
