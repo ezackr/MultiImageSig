@@ -6,14 +6,14 @@ from typing import Tuple
 
 class FC(nn.Module):
     """
-    Dense neural network to compute output in a number of classes (numClasses)
-    from image signature input (of dimension inputDim).
+    Dense neural network to compute output in a number of classes (num_classes)
+    from image signature input (of dimension input_dim).
     """
 
-    def __init__(self, inputDim: Tuple[int, int], hiddenN: int = 50, numClasses: int = 10):
+    def __init__(self, input_dim: Tuple[int, int], hidden_n: int = 50, num_classes: int = 10):
         super(FC, self).__init__()
-        self.fc1 = nn.Linear(inputDim[0] * inputDim[1], hiddenN)
-        self.fc2 = nn.Linear(hiddenN, numClasses)
+        self.fc1 = nn.Linear(input_dim[0] * input_dim[1], hidden_n)
+        self.fc2 = nn.Linear(hidden_n, num_classes)
 
     def forward(self, x: torch.tensor):
         x = torch.flatten(x, 1)

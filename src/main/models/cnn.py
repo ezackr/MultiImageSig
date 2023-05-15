@@ -6,17 +6,16 @@ from typing import Tuple
 
 class CNN(nn.Module):
     """
-    CNN to compute output in a number of classes (numClasses) from image signature input (of dimension inputDim)
+    CNN to compute output in a number of classes (num_classes) from image signature input (of dimension input_dim)
     """
-    def __init__(self, inputDim: Tuple[int, int], hiddenN: int = 50, numClasses: int = 10):
+    def __init__(self, input_dim: Tuple[int, int], hidden_n: int = 50, num_classes: int = 10):
         super(CNN, self).__init__()
-        # TODO: implement correct filters
         self.conv1 = nn.Conv1d(3, 32, kernel_size=(3,))
         self.conv2 = nn.Conv1d(32, 64, kernel_size=(3,))
-        self.fc1 = nn.Linear(inputDim[0] * inputDim[1], hiddenN)
-        self.fc2 = nn.Linear(hiddenN, numClasses)
+        self.fc1 = nn.Linear(input_dim[0] * input_dim[1], hidden_n)
+        self.fc2 = nn.Linear(hidden_n, num_classes)
 
-    def forward(self, x : torch.tensor):
+    def forward(self, x: torch.tensor):
         x = self.conv1(x)
         x = F.relu(x)
         x = F.max_pool1d(3)

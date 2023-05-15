@@ -10,7 +10,7 @@ class PositionalEncoding(nn.Module):
     Uses encoding proposed in "Attention Is All You Need".
     """
 
-    def __init__(self, seq_len=512, d_model=512):
+    def __init__(self, seq_len: int = 512, d_model: int = 512):
         super(PositionalEncoding, self).__init__()
 
         pe = torch.zeros(seq_len, d_model, dtype=torch.float)
@@ -26,5 +26,5 @@ class PositionalEncoding(nn.Module):
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         return x + self.pe[:, :x.size(1), :]
