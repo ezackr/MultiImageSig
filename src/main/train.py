@@ -33,42 +33,44 @@ def train(
         model: nn.Module,
         train_loader: DataLoader,
         val_loader: DataLoader,
-        epochs: int = 10,
-        lr: float = 0.01,
-        momentum: float = 0.1,
-        weight_decay: float = 0.05,
+        epochs: int,
+        learning_rate: float,
+        weight_decay: float,
         initial_checkpoint_name: str = None,
-        checkpoints_path: str = None
+        checkpoints_path: str = None,
+        momentum: float = 0.1
 ):
     model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
     # Load from best checkpoint
     if initial_checkpoint_name is not None:
         checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
 
     train_losses = []
-    with tqdm(desc="Epoch", total=epochs) as progress:
-        for epoch in range(epochs):
-            model.train()
-            total_loss = 0.0
-            for x, y in train_loader:
-                inputs, labels = x.to(device), y.to(device)
+    train_accuracies = []
+    #with tqdm(desc="Epoch", total=epochs) as progress:
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0.0
+        for x, y in tqdm(train_loader):
+            inputs, labels = x.to(device), y.to(device)
 
-                optimizer.zero_grad()
+            optimizer.zero_grad()
 
-                pred = model(inputs)
-                loss = criterion(pred, labels)
-                loss.backward()
-                optimizer.step()
+            pred = model(inputs)
+            loss = criterion(pred, labels)
+            loss.backward()
+            optimizer.step()
 
-                total_loss += loss.item()
-            train_losses.append(total_loss / len(train_loader))
-            # print(f"Epoch {epoch}. Train Loss={train_losses[-1]}. Validation Accuracy={accuracy(model, val_loader)}")
-            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch)
-            checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
-            progress.update()
+            total_loss += loss.item()
+        train_losses.append(total_loss / len(train_loader))
+        train_accuracies.append(accuracy(model, val_loader))
+        print(f"Epoch {epoch}. Train Loss={train_losses[-1]}. Validation Accuracy={train_accuracies[-1]}")
+        checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch)
+        checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
+        # progress.update()
     return train_losses
 
 
@@ -84,7 +86,8 @@ def _get_cifar_data(depth: int, batch_size: int) -> Tuple[torch.Size, DataLoader
     return train_data[0][0].shape, train_loader, val_loader, test_loader
 
 
-def main(model_type: str, depth: int, batchsize: int, *args, **kwargs):
+def main(model_type: str, depth: int, batchsize: int, dataset: str, *args, **kwargs):
+    # TODO: load dataset dynamically based on <dataset>
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
     input_shape, train_loader, val_loader, test_loader = _get_cifar_data(depth, batchsize)
 
@@ -116,9 +119,18 @@ def run_main():
         required=True,
         choices=["fc", "cnn", "attn"]
     )
+    arg_parser.add_argument(
+        "-ds",
+        "--dataset",
+        help="Name of dataset to train on",
+        required=True,
+        choices=["cifar", "concretecracks"]
+    )
     arg_parser.add_argument("-d", "--depth", help="Signature transform depth", default=4, type=int)
     arg_parser.add_argument("-b", "--batchsize", help="Training batch size", default=64, type=int)
     arg_parser.add_argument("-n", "--epochs", help="Number of epochs", default=10, type=int)
+    arg_parser.add_argument("-lr", "--learning-rate", help="Learning rate", default=0.01, type=float)
+    arg_parser.add_argument("-w", "--weight-decay", help="Weight decay", default=0.05, type=float)
     arg_parser.add_argument("-chkpts", "--checkpoints-path", help="Directory to store training checkpoints for model")
     arg_parser.add_argument("-ichkpt", "--initial-checkpoint-name", help="Name of checkpoint to start training at")
 
