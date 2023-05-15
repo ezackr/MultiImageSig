@@ -1,6 +1,5 @@
 import time
 import argparse
-from typing import Tuple
 from tqdm.auto import tqdm
 import os
 from tqdm import tqdm
@@ -54,9 +53,8 @@ def train(
 
     train_losses = []
     train_accuracies = []
-    for epoch in range(epochs):
     start_time = time.time()
-    for i in range(epochs):
+    for epoch in range(epochs):
         epoch_start_time = time.time()
         model.train()
         total_loss = 0.0
@@ -73,50 +71,20 @@ def train(
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
         train_accuracies.append(accuracy(model, val_loader))
-        print(f"Epoch {epoch+1}. Train Loss={train_losses[-1]}. Validation Accuracy={train_accuracies[-1]}")
         if checkpoints_path is not None:
             checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1)
             checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
-    return train_losses
-
-        print(f"Epoch {i + 1}. "
+        print(f"Epoch {epoch + 1}. "
               f"Train Loss={round(train_losses[-1], 4)}. "
-              f"Validation Accuracy={round(accuracy(model, val_loader), 4)}. "
+              f"Validation Accuracy={round(train_accuracies[-1], 4)}. "
               f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
     print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
-
-def _get_data(
-        depth: int,
-        batch_size: int,
-        dataset_name: str
-) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
-    start_time = time.time()
-    print(f"Loading dataset...")
-    if dataset_name == "cifar-10":
-        train_val_data, test_data = load_cifar10(depth=depth)
-    else:
-        train_val_data, test_data = load_concrete_cracks(depth=depth)
-    train_data, val_data = random_split(
-        train_val_data,
-        [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
-    )
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
-    print(f"Dataset loaded in {time.time() - start_time}s")
-    return train_data[0][0].shape, train_loader, val_loader, test_loader
-
+    return train_losses
 
 
 def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_path: str, *args, **kwargs):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
-    _get_data(depth, batch_size, dataset_name)
-    input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
-    # dataset_name should be either "cifar10" or "concretecracks"
-    if dataset == "cifar10":
-        num_classes = 10
-    else:
-        num_classes = 2
+    num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
 
     # Initialize model
     model = None
@@ -157,7 +125,7 @@ def run_main():
         "--dataset",
         help="Name of dataset to train on",
         required=True,
-        choices=["cifar", "concretecracks"]
+        choices=["cifar10", "concretecracks"]
     )
     arg_parser.add_argument("-d", "--depth", help="Signature transform depth", default=4, type=int)
     arg_parser.add_argument("-b", "--batchsize", help="Training batch size", default=64, type=int)

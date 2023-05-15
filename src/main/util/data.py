@@ -1,5 +1,6 @@
 from PIL import Image
 import os
+import time
 from typing import Tuple
 from tqdm import tqdm
 
@@ -152,10 +153,14 @@ def get_data_loaders(dataset: str, depth: int, batchsize: int) -> Tuple[torch.Si
     """
     # Load train, test sets based on dataset requested
     train_val_data, test_data = None, None
-    if dataset == "cifar":
+    start_time = time.time()
+    print(f"Loading dataset...")
+    if dataset == "cifar10":
         train_val_data, test_data = load_cifar10(depth)
+        num_classes = 10
     elif dataset == "concretecracks":
         train_val_data, test_data = load_concrete_cracks(depth)
+        num_classes = 2
 
     # Split train set into train/val sets with 90/10 split
     train_data, val_data = random_split(
@@ -165,4 +170,5 @@ def get_data_loaders(dataset: str, depth: int, batchsize: int) -> Tuple[torch.Si
     train_loader = DataLoader(train_data, batch_size=batchsize, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=batchsize, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batchsize, shuffle=False)
-    return train_data[0][0].shape, train_loader, val_loader, test_loader
+    print(f"Dataset loaded in {time.time() - start_time}s")
+    return num_classes, train_data[0][0].shape, train_loader, val_loader, test_loader
