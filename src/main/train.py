@@ -6,12 +6,13 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
 from src.main.models import CNN, Encoder, FC
-from src.main.util import load_cifar10, checkpoints
+from src.main.util import checkpoints, get_data_loaders
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+torch.set_default_dtype(torch.float64)
 
 
 def accuracy(model: nn.Module, dataset_loader: DataLoader, checkpoint_path: str = None):
@@ -49,7 +50,6 @@ def train(
 
     train_losses = []
     train_accuracies = []
-    #with tqdm(desc="Epoch", total=epochs) as progress:
     for epoch in range(epochs):
         model.train()
         total_loss = 0.0
@@ -69,26 +69,12 @@ def train(
         print(f"Epoch {epoch}. Train Loss={train_losses[-1]}. Validation Accuracy={train_accuracies[-1]}")
         checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch)
         checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
-        # progress.update()
     return train_losses
 
 
-def _get_cifar_data(depth: int, batch_size: int) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
-    train_val_data, test_data = load_cifar10(depth=depth)
-    train_data, val_data = random_split(
-        train_val_data,
-        [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
-    )
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
-    return train_data[0][0].shape, train_loader, val_loader, test_loader
-
-
 def main(model_type: str, depth: int, batchsize: int, dataset: str, *args, **kwargs):
-    # TODO: load dataset dynamically based on <dataset>
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
-    input_shape, train_loader, val_loader, test_loader = _get_cifar_data(depth, batchsize)
+    input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
 
     # Initialize model
     model = None

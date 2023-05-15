@@ -1,15 +1,25 @@
 from PIL import Image
 import os
 from typing import Tuple
+from tqdm import tqdm
 
 import torch
-from torch.utils.data import Dataset, TensorDataset
+from torch.utils.data import Dataset, TensorDataset, DataLoader, random_split
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 from src.main.util.signature import Signature
 
 data_path: str = os.path.dirname(__file__).rstrip("/src/main/util/data.py") + "/data"
+
+
+def _load_cifar10_samples_labels(cifar10_dataset: datasets.CIFAR10, transform: transforms.Compose):
+    samples, labels = [], []
+    for sample, label in tqdm(cifar10_dataset, desc="Processing dataset"):
+        sample = transform(sample)
+        samples.append(sample)
+        labels.append(label)
+    return torch.stack(samples), torch.tensor(labels)
 
 
 def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
@@ -24,15 +34,39 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
         transforms.ToTensor(),
         Signature(depth)
     ])
+
+    # check if artifacts already exist.
+    try:
+        if len(os.listdir(data_path + "/cifar10/artifacts")):
+            print(f"Loading artifacts from {data_path}/cifar10/artifacts")
+            train_samples = torch.load(data_path + "/concrete-crack/artifacts/train_samples.pt")
+            train_labels = torch.load(data_path + "/concrete-crack/artifacts/train_labels.pt")
+            test_samples = torch.load(data_path + "/concrete-crack/artifacts/test_samples.pt")
+            test_labels = torch.load(data_path + "/concrete-crack/artifacts/test_labels.pt")
+            return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
+    except FileNotFoundError:
+        pass
+    print(f"No saved artifact found at {data_path}/cifar10/artifacts\n")
     # load training data.
     train_data = datasets.CIFAR10(
-        root=data_path, train=True, download=True, transform=transform
+        root=data_path, train=True, download=True
     )
     # load test data.
     test_data = datasets.CIFAR10(
-        root=data_path, train=False, download=True, transform=transform
+        root=data_path, train=False, download=True
     )
-    return train_data, test_data
+    print(f"Loading images from {data_path}/cifar10")
+
+    # load samples, labels and combine tensors into datasets.
+    test_samples, test_labels = _load_cifar10_samples_labels(test_data, transform)
+    train_samples, train_labels = _load_cifar10_samples_labels(train_data, transform)
+    # add new artifacts.
+    torch.save(train_samples, data_path + "/cifar10/artifacts/train_samples.pt")
+    torch.save(train_labels, data_path + "/cifar10/artifacts/train_labels.pt")
+    torch.save(test_samples, data_path + "/cifar10/artifacts/test_samples.pt")
+    torch.save(test_labels, data_path + "/cifar10/artifacts/test_labels.pt")
+    # return new dataset.
+    return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
 
 
 def _load_sample_labels(root: str, label: int, depth: int = 4):
@@ -96,3 +130,31 @@ def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
     torch.save(test_labels, data_path + "/concrete-crack/artifacts/test_labels.pt")
     # return new dataset.
     return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
+
+
+def get_data_loaders(dataset: str, depth: int, batchsize: int) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
+    """
+    Load a dataset, process a signature transform over all data with given depth, batching into batches of given
+    size, and split train set into train and validation sets
+
+    :param dataset: Dataset to load ["cifar" for cifar10, "concretecracks" for concrete cracks dataset]
+    :param depth: Depth of signature transform
+    :param batchsize: Batch size for all data loaders
+    :return: Size of a sample in the dataset, and train, validation, and test DataLoaders
+    """
+    # Load train, test sets based on dataset requested
+    train_val_data, test_data = None, None
+    if dataset == "cifar":
+        train_val_data, test_data = load_cifar10(depth)
+    elif dataset == "concretecracks":
+        train_val_data, test_data = load_concrete_cracks(depth)
+
+    # Split train set into train/val sets with 90/10 split
+    train_data, val_data = random_split(
+        train_val_data,
+        [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
+    )
+    train_loader = DataLoader(train_data, batch_size=batchsize, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=batchsize, shuffle=False)
+    test_loader = DataLoader(test_data, batch_size=batchsize, shuffle=False)
+    return train_data[0][0].shape, train_loader, val_loader, test_loader
