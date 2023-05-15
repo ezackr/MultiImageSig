@@ -3,6 +3,7 @@ import argparse
 from tqdm.auto import tqdm
 import os
 from tqdm import tqdm
+from sklearn.metrics import f1_score
 
 import torch
 import torch.nn as nn
@@ -21,14 +22,20 @@ def accuracy(model: nn.Module, dataset_loader: DataLoader, checkpoint_path: str 
     # Calculate accuracy of model on dataset loader
     correct = 0
     total = 0
+    true = torch.tensor([])
+    pred = torch.tensor([])
     model.eval()
     with torch.no_grad():
-        for _, batch in enumerate(dataset_loader, 0):
-            signatures, labels = batch[0].to(device), batch[1].to(device)
+        for x, y in dataset_loader:
+            signatures, labels = x.to(device), y.to(dtype=torch.long, device=device)
             outputs = model(signatures)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            true = torch.cat((true, labels))
+            pred = torch.cat((pred, predicted))
+
+            #correct += (predicted == labels).sum().item()
+    correct = (pred==true).sum().item()
     return correct / total
 
 
@@ -58,7 +65,7 @@ def train(
         epoch_start_time = time.time()
         model.train()
         total_loss = 0.0
-        for x, y in tqdm(train_loader):
+        for x, y in tqdm(train_loader, position=0, leave=True):
             inputs, labels = x.to(device), y.to(dtype=torch.long, device=device)
 
             optimizer.zero_grad()

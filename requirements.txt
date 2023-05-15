@@ -1,5 +1,7 @@
-numpy
+numpy~=1.17.3
+chardet
 matplotlib
+scikit_learn~=1.2.2
 iisignature~=0.24
 torch
 torchvision~=0.15.2

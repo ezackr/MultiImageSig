@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,18 +11,21 @@ class CNN(nn.Module):
     """
     def __init__(self, input_dim: Tuple[int, int], hidden_n: int = 50, num_classes: int = 10):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv1d(3, 32, kernel_size=(3,))
-        self.conv2 = nn.Conv1d(32, 64, kernel_size=(3,))
-        self.fc1 = nn.Linear(input_dim[0] * input_dim[1], hidden_n)
+        # Input has dimension (N, I1, I2)
+        self.conv1 = nn.Conv1d(input_dim[0], 32, kernel_size=3, padding=1)  # (N, I1, I2) -> (N, 32, I2)
+        i3 = math.floor((input_dim[1]-3)/3+1)                               # max-pooling (N, 32, I2) -> (N, 32, I3)
+        self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)            # (N, 32, I3) -> (N, 64, I3)
+        i4 = math.floor((i3-3)/3+1)                                         # max-pooling (N, 64, I3) -> (N, 64, I4)
+        self.fc1 = nn.Linear(64 * i4, hidden_n)                             # (N, 64, I4) -> (N, 64*I4)
         self.fc2 = nn.Linear(hidden_n, num_classes)
 
     def forward(self, x: torch.tensor):
         x = self.conv1(x)
         x = F.relu(x)
-        x = F.max_pool1d(3)
+        x = F.max_pool1d(x, 3, stride=3, padding=0)
         x = self.conv2(x)
         x = F.relu(x)
-        x = F.max_pool1d(3)
+        x = F.max_pool1d(x, 3, stride=3, padding=0)
         x = torch.flatten(x, 1)
         x = self.fc1(x)
         x = F.relu(x)
