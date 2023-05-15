@@ -1,3 +1,4 @@
+import time
 from typing import Tuple
 
 import torch
@@ -6,7 +7,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 
 from src.main.models import CNN, Encoder, FC
-from src.main.util import load_cifar10
+from src.main.util import load_cifar10, load_concrete_cracks
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -58,8 +59,17 @@ def train(
     return train_losses
 
 
-def _get_cifar_data(depth: int, batch_size: int) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
-    train_val_data, test_data = load_cifar10(depth=depth)
+def _get_data(
+        depth: int,
+        batch_size: int,
+        dataset_name: str
+) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
+    start_time = time.time()
+    print(f"Loading dataset...")
+    if dataset_name == "cifar-10":
+        train_val_data, test_data = load_cifar10(depth=depth)
+    else:
+        train_val_data, test_data = load_concrete_cracks(depth=depth)
     train_data, val_data = random_split(
         train_val_data,
         [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
@@ -67,22 +77,23 @@ def _get_cifar_data(depth: int, batch_size: int) -> Tuple[torch.Size, DataLoader
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+    print(f"Dataset loaded in {time.time() - start_time}s")
     return train_data[0][0].shape, train_loader, val_loader, test_loader
 
 
 def main():
     depth: int = 4
     batch_size: int = 64
+    dataset_name = "concrete-cracks"   # dataset_name should be either "cifar-10" or "concrete-cracks"
 
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
-    input_shape, train_loader, val_loader, test_loader = _get_cifar_data(depth, batch_size)
+    input_shape, train_loader, val_loader, test_loader = _get_data(depth, batch_size, dataset_name)
 
     # Initialize models
     fc_model = FC(input_shape)
-    cnn_model = CNN(input_shape)
-    attn_model = Encoder(input_shape[1])
+    # cnn_model = CNN(input_shape)
+    # attn_model = Encoder(input_shape[1])
 
-    print("Training fully-connected model")
     train(fc_model, train_loader, val_loader)
 
 
