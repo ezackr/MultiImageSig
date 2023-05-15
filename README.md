@@ -10,10 +10,26 @@ This repository has the following layout:
 - ``model``: a package containing implementations of the neural networks used to evaluate the performance of ImageSig.
 - ``util``: general-purpose utility methods.
 
+## Setup
+The requirements for this project are stored in `requirements.txt` and can be installed with `pip`:
+``pip install -r requirements.txt``
+
+## Usage
+### Training & Storing a Model
+
+
+### Evaluating a Model
+
+
+### Test Suite
+Unit tests are stored under `src/test`.
+
 ## Related Resources
-[ImageSig](https://github.com/urbanist-ai/ImageSig): The original implementation of ImageSig
+[ImageSig](https://github.com/urbanist-ai/ImageSig): The original implementation of ImageSig.
 
 [Signatory](https://github.com/patrick-kidger/signatory): The package used by ImageSig to create image signatures.
 
-[IISignature](https://github.com/bottler/iisignature): Additional library with other helpful methods for creating signatures.
+[IISignature](https://github.com/bottler/iisignature): Additional library used by ImageSig with other helpful methods for creating signatures. We use this library for computing signatures.
 
+## License
+See [LICENSE](LICENSE) for details.
