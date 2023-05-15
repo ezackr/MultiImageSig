@@ -28,6 +28,7 @@ class CIFARSignature(TensorDataset):
         "truck"
     ]
 
+
 def _load_cifar10_samples_labels(cifar10_dataset: datasets.CIFAR10, transform: transforms.Compose):
     samples, labels = [], []
     for sample, label in tqdm(cifar10_dataset, desc="Processing dataset"):
@@ -160,7 +161,11 @@ def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
     return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
 
 
-def get_data_loaders(dataset: str, depth: int, batchsize: int) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
+def get_data_loaders(
+        dataset: str,
+        depth: int,
+        batchsize: int
+) -> Tuple[int, torch.Size, DataLoader, DataLoader, DataLoader]:
     """
     Load a dataset, process a signature transform over all data with given depth, batching into batches of given
     size, and split train set into train and validation sets
@@ -168,7 +173,7 @@ def get_data_loaders(dataset: str, depth: int, batchsize: int) -> Tuple[torch.Si
     :param dataset: Dataset to load ["cifar" for cifar10, "concretecracks" for concrete cracks dataset]
     :param depth: Depth of signature transform
     :param batchsize: Batch size for all data loaders
-    :return: Size of a sample in the dataset, and train, validation, and test DataLoaders
+    :return: Number of classes in dataset, size of a sample in the dataset, and train, validation, and test DataLoaders
     """
     # Load train, test sets based on dataset requested
     train_val_data, test_data = None, None

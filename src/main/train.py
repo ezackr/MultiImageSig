@@ -11,31 +11,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, Encoder, FC
-from src.main.util import checkpoints, get_data_loaders
+from src.main.util import checkpoints, get_data_loaders, accuracy
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 base_path: str = os.path.dirname(__file__).rstrip(os.path.normpath("/src/main/train.py"))
-
-
-def accuracy(model: nn.Module, dataset_loader: DataLoader, checkpoint_path: str = None):
-    # Calculate accuracy of model on dataset loader
-    correct = 0
-    total = 0
-    y_true = torch.tensor([])
-    y_pred = torch.tensor([])
-    model.eval()
-    with torch.no_grad():
-        for x, y in dataset_loader:
-            signatures, labels = x.to(device), y.to(dtype=torch.long, device=device)
-            outputs = model(signatures)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            y_true = torch.cat((y_true, labels))
-            y_pred = torch.cat((y_pred, predicted))
-
-    correct = (y_pred==y_true).sum().item()
-    return correct / total, f1_score(y_true, y_pred)
 
 
 def train(
@@ -76,14 +56,13 @@ def train(
 
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
-        train_accuracies.append((accuracy(model, val_loader)))
+        train_accuracies.append(accuracy(model, val_loader, device))
         if checkpoints_path is not None:
             checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1)
             checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
         print(f"Epoch {epoch + 1}. "
               f"Train Loss={round(train_losses[-1], 4)}. "
-              f"Validation Accuracy={round(train_accuracies[-1][0], 4)}. "
-              f"Validation F1-Score={round(train_accuracies[-1][1], 4)}. "
+              f"Validation Accuracy={round(train_accuracies[-1], 4)}. "
               f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
     print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
     return train_losses
