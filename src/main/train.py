@@ -37,12 +37,11 @@ def train(
         learning_rate: float,
         weight_decay: float,
         initial_checkpoint_name: str = None,
-        checkpoints_path: str = None,
-        momentum: float = 0.1
+        checkpoints_path: str = None
 ):
     model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load from best checkpoint
     if initial_checkpoint_name is not None:
