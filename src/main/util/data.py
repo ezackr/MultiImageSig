@@ -10,7 +10,7 @@ import torchvision.transforms as transforms
 
 from src.main.util.signature import Signature
 
-data_path: str = os.path.dirname(__file__).rstrip("/src/main/util/data.py") + "/data"
+data_path: str = os.path.join(os.path.dirname(__file__).rstrip("/src/main/util/data.py"), "data")
 
 
 def _load_cifar10_samples_labels(cifar10_dataset: datasets.CIFAR10, transform: transforms.Compose):
@@ -35,18 +35,23 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
         Signature(depth)
     ])
 
+    # path for artifacts for train/test samples/labels
+    artifacts_path = os.path.join(os.path.abspath(data_path), "cifar10/artifacts")
+
     # check if artifacts already exist.
     try:
-        if len(os.listdir(data_path + "/cifar10/artifacts")):
-            print(f"Loading artifacts from {data_path}/cifar10/artifacts")
-            train_samples = torch.load(data_path + "/concrete-crack/artifacts/train_samples.pt")
-            train_labels = torch.load(data_path + "/concrete-crack/artifacts/train_labels.pt")
-            test_samples = torch.load(data_path + "/concrete-crack/artifacts/test_samples.pt")
-            test_labels = torch.load(data_path + "/concrete-crack/artifacts/test_labels.pt")
+        if len(os.listdir(os.path.join(artifacts_path))):
+            print(f"Loading artifacts from {artifacts_path}")
+            train_samples = torch.load(os.path.join(artifacts_path, "train_samples.pt"))
+            train_labels = torch.load(os.path.join(artifacts_path, "train_labels.pt"))
+            test_samples = torch.load(os.path.join(artifacts_path, "test_samples.pt"))
+            test_labels = torch.load(os.path.join(artifacts_path, "test_labels.pt"))
             return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
     except FileNotFoundError:
-        pass
-    print(f"No saved artifact found at {data_path}/cifar10/artifacts\n")
+        os.makedirs(os.path.abspath(artifacts_path))
+
+    print(f"No saved artifact found at {artifacts_path}\nLoading images for cifar10...")
+
     # load training data.
     train_data = datasets.CIFAR10(
         root=data_path, train=True, download=True
@@ -55,16 +60,17 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
     test_data = datasets.CIFAR10(
         root=data_path, train=False, download=True
     )
-    print(f"Loading images from {data_path}/cifar10")
 
     # load samples, labels and combine tensors into datasets.
     test_samples, test_labels = _load_cifar10_samples_labels(test_data, transform)
     train_samples, train_labels = _load_cifar10_samples_labels(train_data, transform)
+
     # add new artifacts.
-    torch.save(train_samples, data_path + "/cifar10/artifacts/train_samples.pt")
-    torch.save(train_labels, data_path + "/cifar10/artifacts/train_labels.pt")
-    torch.save(test_samples, data_path + "/cifar10/artifacts/test_samples.pt")
-    torch.save(test_labels, data_path + "/cifar10/artifacts/test_labels.pt")
+    torch.save(train_samples, os.path.join(artifacts_path, "train_samples.pt"))
+    torch.save(train_labels, os.path.join(artifacts_path, "train_labels.pt"))
+    torch.save(test_samples, os.path.join(artifacts_path, "test_samples.pt"))
+    torch.save(test_labels, os.path.join(artifacts_path, "test_labels.pt"))
+
     # return new dataset.
     return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
 

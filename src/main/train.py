@@ -67,8 +67,9 @@ def train(
         train_losses.append(total_loss / len(train_loader))
         train_accuracies.append(accuracy(model, val_loader))
         print(f"Epoch {epoch}. Train Loss={train_losses[-1]}. Validation Accuracy={train_accuracies[-1]}")
-        checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch)
-        checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
+        if checkpoints_path is not None:
+            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch)
+            checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
     return train_losses
 
 
@@ -85,6 +86,7 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, *args, **kwa
     elif model_type == "attn":
         model = Encoder(input_shape[1])
 
+    print(f"Training model {model_type}")
     # Train model
     train(
         model,
