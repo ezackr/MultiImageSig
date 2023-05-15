@@ -100,16 +100,21 @@ def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
         - The first entry in the returned Tuple is the training data.
         - The second entry in the returned Tuple is the test data.
     """
+    # path for artifacts for train/test samples/labels
+    artifacts_path = os.path.join(os.path.abspath(data_path), "concrete-crack/artifacts")
+
     # check if artifacts already exist.
-    if len(os.listdir(data_path + "/concrete-crack/artifacts")):
-        print(f"Loading artifacts from {data_path}/concrete-crack/artifacts")
-        train_samples = torch.load(data_path + "/concrete-crack/artifacts/train_samples.pt")
-        train_labels = torch.load(data_path + "/concrete-crack/artifacts/train_labels.pt")
-        test_samples = torch.load(data_path + "/concrete-crack/artifacts/test_samples.pt")
-        test_labels = torch.load(data_path + "/concrete-crack/artifacts/test_labels.pt")
-        return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
-    else:
-        print(f"No saved artifact found at {data_path}/concrete-crack/artifacts")
+    try:
+        if len(os.listdir(os.path.join(artifacts_path))):
+            print(f"Loading artifacts from {artifacts_path}")
+            train_samples = torch.load(os.path.join(artifacts_path, "train_samples.pt"))
+            train_labels = torch.load(os.path.join(artifacts_path, "train_labels.pt"))
+            test_samples = torch.load(os.path.join(artifacts_path, "test_samples.pt"))
+            test_labels = torch.load(os.path.join(artifacts_path, "test_labels.pt"))
+            return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
+    except FileNotFoundError:
+        os.makedirs(os.path.abspath(artifacts_path))
+    print(f"No saved artifact found at {artifacts_path}")
     # load each sample.
     print(f"Loading images from {data_path}/concrete-crack")
     neg_samples, neg_labels = _load_sample_labels(
@@ -133,10 +138,10 @@ def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
     test_samples = torch.vstack([test_neg_samples, test_pos_samples])
     test_labels = torch.cat([test_neg_labels, test_pos_labels])
     # add new artifacts.
-    torch.save(train_samples, data_path + "/concrete-crack/artifacts/train_samples.pt")
-    torch.save(train_labels, data_path + "/concrete-crack/artifacts/train_labels.pt")
-    torch.save(test_samples, data_path + "/concrete-crack/artifacts/test_samples.pt")
-    torch.save(test_labels, data_path + "/concrete-crack/artifacts/test_labels.pt")
+    torch.save(train_samples, os.path.join(artifacts_path, "train_samples.pt"))
+    torch.save(train_labels, os.path.join(artifacts_path, "train_labels.pt"))
+    torch.save(test_samples, os.path.join(artifacts_path, "test_samples.pt"))
+    torch.save(test_labels, os.path.join(artifacts_path, "test_labels.pt"))
     # return new dataset.
     return TensorDataset(train_samples, train_labels), TensorDataset(test_samples, test_labels)
 
