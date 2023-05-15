@@ -22,7 +22,8 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
     # get data transformation.
     transform = transforms.Compose([
         transforms.ToTensor(),
-        Signature(depth)
+        Signature(depth),
+        transforms.Lambda(lambda x: x.to(dtype=torch.float32))
     ])
     # load training data.
     train_data = datasets.CIFAR10(
@@ -39,7 +40,8 @@ def _load_sample_labels(root: str, label: int, depth: int = 4):
     transform = transforms.Compose([
         transforms.PILToTensor(),
         transforms.Lambda(lambda x: x / 255.0),
-        Signature(depth)
+        Signature(depth),
+        transforms.Lambda(lambda x: x.to(dtype=torch.float32))
     ])
     images = []
     for name in os.listdir(root):
