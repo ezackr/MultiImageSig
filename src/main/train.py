@@ -41,12 +41,13 @@ def train(
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
     train_losses = []
+    start_time = time.time()
     for i in range(epochs):
-        start_time = time.time()
+        epoch_start_time = time.time()
         model.train()
         total_loss = 0.0
         for x, y in tqdm(train_loader):
-            inputs, labels = x.to(device), y.to(device)
+            inputs, labels = x.to(device), y.to(dtype=torch.long, device=device)
 
             optimizer.zero_grad()
 
@@ -58,9 +59,10 @@ def train(
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
         print(f"Epoch {i + 1}. "
-              f"Train Loss={train_losses[-1]}. "
-              f"Validation Accuracy={accuracy(model, val_loader)}. "
-              f"Total Time={round((time.time() - start_time)/ 60, 2)}m")
+              f"Train Loss={round(train_losses[-1], 4)}. "
+              f"Validation Accuracy={round(accuracy(model, val_loader), 4)}. "
+              f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
+    print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
     return train_losses
 
 
@@ -90,12 +92,16 @@ def main():
     depth: int = 4
     batch_size: int = 64
     dataset_name = "concrete-cracks"   # dataset_name should be either "cifar-10" or "concrete-cracks"
+    if dataset_name == "cifar-10":
+        num_classes = 10
+    else:
+        num_classes = 2
 
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
     input_shape, train_loader, val_loader, test_loader = _get_data(depth, batch_size, dataset_name)
 
     # Initialize models
-    fc_model = FC(input_shape)
+    fc_model = FC(input_shape, numClasses=num_classes)
     # cnn_model = CNN(input_shape)
     # attn_model = Encoder(input_shape[1])
 
