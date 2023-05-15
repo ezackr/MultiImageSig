@@ -1,5 +1,6 @@
 import time
 from typing import Tuple
+from tqdm.auto import tqdm
 
 import torch
 import torch.nn as nn
@@ -41,9 +42,10 @@ def train(
 
     train_losses = []
     for i in range(epochs):
+        start_time = time.time()
         model.train()
         total_loss = 0.0
-        for x, y in train_loader:
+        for x, y in tqdm(train_loader):
             inputs, labels = x.to(device), y.to(device)
 
             optimizer.zero_grad()
@@ -55,7 +57,10 @@ def train(
 
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
-        print(f"Epoch {i}. Train Loss={train_losses[-1]}. Validation Accuracy={accuracy(model, val_loader)}")
+        print(f"Epoch {i + 1}. "
+              f"Train Loss={train_losses[-1]}. "
+              f"Validation Accuracy={accuracy(model, val_loader)}. "
+              f"Total Time={round((time.time() - start_time)/ 60, 2)}m")
     return train_losses
 
 
