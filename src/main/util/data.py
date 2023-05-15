@@ -99,7 +99,7 @@ def _load_sample_labels(root: str, label: int, depth: int = 4):
         transforms.Lambda(lambda x: x.to(dtype=torch.float32))
     ])
     images = []
-    for name in os.listdir(root):
+    for name in tqdm(os.listdir(root)):
         fp = os.path.join(root, name)
         if os.path.isfile(fp):
             img = transform(Image.open(fp))
