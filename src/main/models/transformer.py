@@ -57,7 +57,7 @@ class Encoder(nn.Module):
             d_model: int = 512,
             num_heads: int = 8,
             num_classes: int = 10,
-            max_len: int = 64,
+            max_len: int = 256,
             dropout: float = 0.1
     ):
         super(Encoder, self).__init__()

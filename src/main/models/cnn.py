@@ -16,7 +16,7 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(inputDim[0] * inputDim[1], hiddenN)
         self.fc2 = nn.Linear(hiddenN, numClasses)
 
-    def forward(self, x : torch.tensor):
+    def forward(self, x: torch.tensor):
         x = self.conv1(x)
         x = F.relu(x)
         x = F.max_pool1d(3)
