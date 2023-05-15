@@ -42,4 +42,4 @@ def generate_checkpoint_name(checkpoints_base_path: str, model: nn.Module, epoch
     :param epoch: Epoch number
     :return: Checkpoint path and name
     """
-    return os.path.join(checkpoints_base_path, model.__class__.__name__, f"{epoch}")
+    return os.path.join(checkpoints_base_path, f"chkpt-{model.__class__.__name__}-{epoch}.pt")

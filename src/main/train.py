@@ -14,6 +14,8 @@ from src.main.util import checkpoints, get_data_loaders
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float64)
 
+base_path: str = os.path.dirname(__file__).rstrip(os.path.normpath("/src/main/train.py"))
+
 
 def accuracy(model: nn.Module, dataset_loader: DataLoader, checkpoint_path: str = None):
     # Calculate accuracy of model on dataset loader
@@ -46,6 +48,7 @@ def train(
 
     # Load from best checkpoint
     if initial_checkpoint_name is not None:
+        print(f"Loading initial checkpoint from {initial_checkpoint_name}")
         checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
 
     train_losses = []
@@ -73,7 +76,7 @@ def train(
     return train_losses
 
 
-def main(model_type: str, depth: int, batchsize: int, dataset: str, *args, **kwargs):
+def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_path: str, *args, **kwargs):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
     input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
 
@@ -86,6 +89,11 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, *args, **kwa
     elif model_type == "attn":
         model = Encoder(input_shape[1])
 
+    # Setup checkpoints path, if it doesn't exist
+    checkpoints_full_path = os.path.join(base_path, checkpoints_path)
+    if not os.path.exists(checkpoints_full_path):
+        os.makedirs(checkpoints_full_path)
+
     print(f"Training model {model_type}")
     # Train model
     train(
@@ -93,6 +101,7 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, *args, **kwa
         train_loader,
         val_loader,
         *args,
+        checkpoints_path=checkpoints_full_path,
         **kwargs
     )
 
@@ -118,11 +127,23 @@ def run_main():
     arg_parser.add_argument("-n", "--epochs", help="Number of epochs", default=10, type=int)
     arg_parser.add_argument("-lr", "--learning-rate", help="Learning rate", default=0.01, type=float)
     arg_parser.add_argument("-w", "--weight-decay", help="Weight decay", default=0.05, type=float)
-    arg_parser.add_argument("-chkpts", "--checkpoints-path", help="Directory to store training checkpoints for model")
-    arg_parser.add_argument("-ichkpt", "--initial-checkpoint-name", help="Name of checkpoint to start training at")
+    arg_parser.add_argument(
+        "-chkpts",
+        "--checkpoints-path",
+        help="Directory to store training checkpoints for model, relative to root directory of project",
+        default=None,
+        type=str
+    )
+    arg_parser.add_argument(
+        "-ichkpt",
+        "--initial-checkpoint-name",
+        help="Name/path of checkpoint to start training at, relative to --checkpoints-path",
+        default=None,
+        type=str
+    )
 
-    args, extras = arg_parser.parse_known_args()
-    main(*extras, **vars(args))
+    args, _ = arg_parser.parse_known_args()  # Only parse known args
+    main(**vars(args))
 
 
 if __name__ == "__main__":
