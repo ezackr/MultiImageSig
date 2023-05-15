@@ -1,5 +1,7 @@
+import time
 import argparse
 from typing import Tuple
+from tqdm.auto import tqdm
 import os
 from tqdm import tqdm
 
@@ -12,7 +14,6 @@ from src.main.models import CNN, Encoder, FC
 from src.main.util import checkpoints, get_data_loaders
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-torch.set_default_dtype(torch.float64)
 
 base_path: str = os.path.dirname(__file__).rstrip(os.path.normpath("/src/main/train.py"))
 
@@ -54,10 +55,13 @@ def train(
     train_losses = []
     train_accuracies = []
     for epoch in range(epochs):
+    start_time = time.time()
+    for i in range(epochs):
+        epoch_start_time = time.time()
         model.train()
         total_loss = 0.0
         for x, y in tqdm(train_loader):
-            inputs, labels = x.to(device), y.to(device)
+            inputs, labels = x.to(device), y.to(dtype=torch.long, device=device)
 
             optimizer.zero_grad()
 
@@ -75,10 +79,44 @@ def train(
             checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
     return train_losses
 
+        print(f"Epoch {i + 1}. "
+              f"Train Loss={round(train_losses[-1], 4)}. "
+              f"Validation Accuracy={round(accuracy(model, val_loader), 4)}. "
+              f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
+    print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
+
+def _get_data(
+        depth: int,
+        batch_size: int,
+        dataset_name: str
+) -> Tuple[torch.Size, DataLoader, DataLoader, DataLoader]:
+    start_time = time.time()
+    print(f"Loading dataset...")
+    if dataset_name == "cifar-10":
+        train_val_data, test_data = load_cifar10(depth=depth)
+    else:
+        train_val_data, test_data = load_concrete_cracks(depth=depth)
+    train_data, val_data = random_split(
+        train_val_data,
+        [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
+    )
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+    print(f"Dataset loaded in {time.time() - start_time}s")
+    return train_data[0][0].shape, train_loader, val_loader, test_loader
+
+
 
 def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_path: str, *args, **kwargs):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
+    _get_data(depth, batch_size, dataset_name)
     input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
+    # dataset_name should be either "cifar10" or "concretecracks"
+    if dataset == "cifar10":
+        num_classes = 10
+    else:
+        num_classes = 2
 
     # Initialize model
     model = None
@@ -104,7 +142,6 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
         checkpoints_path=checkpoints_full_path,
         **kwargs
     )
-
 
 def run_main():
     arg_parser = argparse.ArgumentParser()

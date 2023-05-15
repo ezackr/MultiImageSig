@@ -16,7 +16,7 @@ class FC(nn.Module):
         self.fc2 = nn.Linear(hidden_n, num_classes)
 
     def forward(self, x: torch.tensor):
-        x = torch.flatten(x, 1)
+        x = torch.flatten(x, start_dim=1)
         x = self.fc1(x)
         x = F.dropout(x, 0.4)
         x = F.relu(x)
