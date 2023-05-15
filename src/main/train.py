@@ -1,3 +1,4 @@
+import argparse
 from typing import Tuple
 
 import torch
@@ -11,10 +12,13 @@ from src.main.util import load_cifar10
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def accuracy(model: nn.Module, dataset_loader: DataLoader):
+def accuracy(model: nn.Module, dataset_loader: DataLoader, checkpoint_path: str = None):
     # Calculate accuracy of model on dataset loader
     correct = 0
     total = 0
+    model.eval()
+    # Save model to checkpoint, if any
+    # TODO
     with torch.no_grad():
         for _, batch in enumerate(dataset_loader, 0):
             signatures, labels = batch[0].to(device), batch[1].to(device)
@@ -32,7 +36,8 @@ def train(
         epochs: int = 10,
         lr: float = 0.01,
         momentum: float = 0.1,
-        weight_decay: float = 0.05
+        weight_decay: float = 0.05,
+        checkpoint_path: str = None
 ):
     model.to(device)
     criterion = nn.CrossEntropyLoss()
@@ -70,21 +75,43 @@ def _get_cifar_data(depth: int, batch_size: int) -> Tuple[torch.Size, DataLoader
     return train_data[0][0].shape, train_loader, val_loader, test_loader
 
 
-def main():
-    depth: int = 4
-    batch_size: int = 64
-
+def main(model_type: str, depth: int, batch_size: int, checkpoint_path: str):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
     input_shape, train_loader, val_loader, test_loader = _get_cifar_data(depth, batch_size)
 
     # Initialize models
-    fc_model = FC(input_shape)
-    cnn_model = CNN(input_shape)
-    attn_model = Encoder(input_shape[1])
+    model = None
+    if model_type == "fc":
+        model = FC(input_shape)
+    elif model_type == "cnn":
+        model = CNN(input_shape)
+    elif model_type == "attn":
+        model = Encoder(input_shape[1])
 
-    print("Training fully-connected model")
-    train(fc_model, train_loader, val_loader)
+    # Run train method
+    train(model, train_loader, val_loader, checkpoint_path=checkpoint_path)
+
+    # Store trained model
+
+
+
+
+def run_main():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+            "-m",
+            "--model",
+            help="Model type (options: fc, cnn, attn)",
+            required=True,
+            choices=["fc","cnn", "attn"]
+    )
+    arg_parser.add_argument("-d", "--depth", help="Signature transform depth", default=4, type=int)
+    arg_parser.add_argument("-b", "--batch", help="Training batch size", default=64, type=int)
+    arg_parser.add_argument("-chk", "--checkpoint-path", help="Path to training checkpoint for model")
+
+    args = arg_parser.parse_args()
+    main(args)
 
 
 if __name__ == "__main__":
-    main()
+    run_main()
