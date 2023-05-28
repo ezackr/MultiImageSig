@@ -48,7 +48,7 @@ def test_data_loaders_cifar10():
     ]
 
 
-def test_data_loaders_cifar10():
+def test_data_loaders_cifar10_subsets():
     num_classes, data_shape, train_dl, val_dl, test_dl = get_data_loaders("cifar10", 4, 64)
     assert num_classes == 10
     assert len(train_dl) == math.ceil(0.9*50000/64)  # check 90% split for train
