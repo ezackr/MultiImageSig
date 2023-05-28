@@ -17,23 +17,31 @@ class EncoderBlock(nn.Module):
     """
     def __init__(self, d_model: int, num_heads: int = 8, dropout: float = 0.1):
         super(EncoderBlock, self).__init__()
-        # self-attention.
-        self.attention = nn.MultiheadAttention(embed_dim=d_model,
-                                               num_heads=num_heads)
+        # attention block.
         self.norm1 = nn.LayerNorm(normalized_shape=d_model)
-        self.dropout1 = nn.Dropout(p=dropout)
-        # feed forward.
+        self.attention = nn.MultiheadAttention(
+            embed_dim=d_model,
+            num_heads=num_heads,
+            dropout=dropout
+        )
+
+        # feed-forward block.
+        self.norm2 = nn.LayerNorm(normalized_shape=d_model)
         self.feedforward = nn.Sequential(
             nn.Linear(d_model, 64),
-            nn.ReLU(),
-            nn.Linear(64, d_model)
+            nn.GELU(),
+            nn.Linear(64, d_model),
+            nn.GELU(),
+            nn.Dropout(p=dropout)
         )
-        self.norm2 = nn.LayerNorm(normalized_shape=d_model)
-        self.dropout2 = nn.Dropout(p=dropout)
 
     def forward(self, x: torch.Tensor):
-        x_attn = self.dropout1(self.norm1(x + self.attention(x, x, x)[0]))
-        x_out = self.dropout2(self.norm2(x_attn + self.feedforward(x_attn)))
+        # attention block.
+        norm_x = self.norm1(x)
+        x_attn = x + self.attention(norm_x, norm_x, norm_x)[0]
+        # feed-forward block.
+        norm_x = self.norm2(x_attn)
+        x_out = x_attn + self.feedforward(norm_x)
         return x_out
 
 
@@ -70,6 +78,7 @@ class Encoder(nn.Module):
         self.linear_out = nn.Linear(d_model, num_classes)
 
     def forward(self, x: torch.Tensor):
+        print(x.shape)
         x_in = self.linear_in(x)
         x_enc = self.positional_encoding(x_in)
         for block in self.blocks:
