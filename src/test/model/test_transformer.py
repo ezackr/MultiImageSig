@@ -1,6 +1,6 @@
 import torch
 
-from src.main.models.transformer import Encoder, EncoderBlock
+from src.main.models.transformer import AttentionEncoder, EncoderBlock
 
 
 def test_encoder_block():
@@ -21,7 +21,7 @@ def test_encoder():
     seq_len = 256
     x = torch.rand(size=(batch_size, seq_len, input_dim))
 
-    encoder = Encoder(
+    encoder = AttentionEncoder(
         input_dim=input_dim,
         num_layers=6,
         d_model=d_model,

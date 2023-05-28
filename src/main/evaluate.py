@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from src.main.models import CNN, Encoder, FC
+from src.main.models import CNN, AttentionEncoder, FC
 from src.main.util import checkpoints, get_data_loaders, accuracy
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -40,7 +40,7 @@ def main(model_type: str, dataset: str, depth: int, checkpoint_name: str, checkp
     elif model_type == "cnn":
         model = CNN(input_shape)
     elif model_type == "attn":
-        model = Encoder(input_shape[1])
+        model = AttentionEncoder(input_shape[1])
 
     # Setup checkpoints path, if it doesn't exist
     checkpoints_full_path = os.path.join(base_path, checkpoints_path, checkpoint_name)

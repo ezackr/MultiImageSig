@@ -45,7 +45,7 @@ class EncoderBlock(nn.Module):
         return x_out
 
 
-class Encoder(nn.Module):
+class AttentionEncoder(nn.Module):
     """
     A sequence of EncoderBlocks used to create an encoder.
 
@@ -68,7 +68,7 @@ class Encoder(nn.Module):
             max_len: int = 256,
             dropout: float = 0.1
     ):
-        super(Encoder, self).__init__()
+        super(AttentionEncoder, self).__init__()
         self.linear_in = nn.Linear(input_dim, d_model)
         self.positional_encoding = PositionalEncoding(max_len, d_model)
         self.blocks = nn.ModuleList([
