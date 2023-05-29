@@ -63,10 +63,10 @@ class AttentionEncoder(nn.Module):
     def __init__(
             self,
             input_shape: Tuple[int, int],
-            num_layers: int = 6,
+            num_layers: int = 20,
             num_heads: int = 8,
             num_classes: int = 10,
-            dropout: float = 0.1
+            dropout: float = 0.4
     ):
         super(AttentionEncoder, self).__init__()
         seq_len, sig_dim = input_shape
