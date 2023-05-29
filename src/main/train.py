@@ -79,7 +79,7 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
     elif model_type == "cnn":
         model = CNN(input_shape)
     elif model_type == "attn":
-        model = AttentionEncoder(input_shape[1])
+        model = AttentionEncoder(input_shape)
 
     # Setup checkpoints path, if it doesn't exist
     checkpoints_full_path = os.path.join(base_path, checkpoints_path)
