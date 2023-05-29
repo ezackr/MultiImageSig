@@ -33,7 +33,7 @@ def load_checkpoint(optimizer: optim.Optimizer, model: nn.Module, checkpoint_pat
             optimizer.load_state_dict(checkpoint['optimizer'])
 
 
-def generate_checkpoint_name(checkpoints_base_path: str, model: nn.Module, epoch: int):
+def generate_checkpoint_name(checkpoints_base_path: str, model: nn.Module, epoch: int, depth: int):
     """
     Generate a checkpoint name for the given model type and epoch
 
@@ -42,4 +42,4 @@ def generate_checkpoint_name(checkpoints_base_path: str, model: nn.Module, epoch
     :param epoch: Epoch number
     :return: Checkpoint path and name
     """
-    return os.path.join(checkpoints_base_path, f"chkpt-{model.__class__.__name__}-{epoch}.pt")
+    return os.path.join(checkpoints_base_path, f"chkpt-{model.__class__.__name__}-depth-{depth}-epoch-{epoch}.pt")

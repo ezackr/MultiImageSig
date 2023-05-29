@@ -3,7 +3,6 @@ import argparse
 from tqdm.auto import tqdm
 import os
 from tqdm import tqdm
-from sklearn.metrics import f1_score
 
 import torch
 import torch.nn as nn
@@ -25,6 +24,7 @@ def train(
         epochs: int,
         learning_rate: float,
         weight_decay: float,
+        depth: int,
         initial_checkpoint_name: str = None,
         checkpoints_path: str = None
 ):
@@ -58,7 +58,7 @@ def train(
         train_losses.append(total_loss / len(train_loader))
         train_accuracies.append(accuracy(model, val_loader, device))
         if checkpoints_path is not None:
-            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1)
+            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1, depth)
             checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
         print(f"Epoch {epoch + 1}. "
               f"Train Loss={round(train_losses[-1], 4)}. "
@@ -70,7 +70,8 @@ def train(
 
 def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_path: str, *args, **kwargs):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
-    num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
+    num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize, False)
+    val_loader = test_loader  # Skip creating train/val split since we don't tune hyperparams
 
     # Initialize model
     model = None
@@ -94,6 +95,7 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
         val_loader,
         *args,
         checkpoints_path=checkpoints_full_path,
+        depth=depth,
         **kwargs
     )
 

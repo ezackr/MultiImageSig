@@ -38,7 +38,7 @@ def _load_cifar10_samples_labels(cifar10_dataset: datasets.CIFAR10, transform: t
     return torch.stack(samples), torch.tensor(labels)
 
 
-def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
+def load_cifar10(depth: int = 5) -> Tuple[Dataset, Dataset]:
     """
     :param depth: the depth of the signature transform.
     :return: the CIFAR10 dataset represented by tensors.
@@ -53,7 +53,7 @@ def load_cifar10(depth: int = 4) -> Tuple[Dataset, Dataset]:
     ])
 
     # path for artifacts for train/test samples/labels
-    artifacts_path = os.path.join(os.path.abspath(data_path), "cifar10/artifacts")
+    artifacts_path = os.path.join(os.path.abspath(data_path), "cifar10/artifacts-depth-" + str(depth))
 
     # check if artifacts already exist.
     try:
@@ -164,21 +164,25 @@ def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
 def get_data_loaders(
         dataset: str,
         depth: int,
-        batchsize: int
+        batchsize: int,
+        val_split: bool = True
 ) -> Tuple[int, torch.Size, DataLoader, DataLoader, DataLoader]:
     """
     Load a dataset, process a signature transform over all data with given depth, batching into batches of given
     size, and split train set into train and validation sets
 
-    :param dataset: Dataset to load ["cifar" for cifar10, "concretecracks" for concrete cracks dataset]
+    :param dataset: Dataset to load ["cifar10" for cifar10, "concretecracks" for concrete cracks dataset]
     :param depth: Depth of signature transform
     :param batchsize: Batch size for all data loaders
+    :param val_split: Split train into train/val (if false, val loader returned is None)
     :return: Number of classes in dataset, size of a sample in the dataset, and train, validation, and test DataLoaders
     """
     # Load train, test sets based on dataset requested
     train_val_data, test_data = None, None
     start_time = time.time()
+
     print(f"Loading dataset...")
+    num_classes = -1
     if dataset == "cifar10":
         train_val_data, test_data = load_cifar10(depth)
         num_classes = 10
@@ -187,12 +191,16 @@ def get_data_loaders(
         num_classes = 2
 
     # Split train set into train/val sets with 90/10 split
-    train_data, val_data = random_split(
-        train_val_data,
-        [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
-    )
+    if val_split:
+        train_data, val_data = random_split(
+            train_val_data,
+            [int(0.9 * len(train_val_data)), int(0.1 * len(train_val_data))]
+        )
+        val_loader = DataLoader(val_data, batch_size=batchsize, shuffle=False)
+    else:
+        train_data = train_val_data
+        val_loader = None
     train_loader = DataLoader(train_data, batch_size=batchsize, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batchsize, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batchsize, shuffle=False)
     print(f"Dataset loaded in {time.time() - start_time}s")
     return num_classes, train_data[0][0].shape, train_loader, val_loader, test_loader
