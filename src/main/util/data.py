@@ -143,10 +143,10 @@ def load_concrete_cracks(depth: int = 4) -> Tuple[Dataset, Dataset]:
         depth=depth
     )
     # split data into train and test sets (85/15 split).
-    train_neg_samples, train_neg_labels = neg_samples[:17000], neg_labels[:17000]
-    test_neg_samples, test_neg_labels = neg_samples[-3000:], neg_labels[-3000:]
-    train_pos_samples, train_pos_labels = pos_samples[:17000], pos_labels[:17000]
-    test_pos_samples, test_pos_labels = pos_samples[-3000:], pos_labels[-3000:]
+    train_neg_samples, train_neg_labels = neg_samples[:18000], neg_labels[:18000]
+    test_neg_samples, test_neg_labels = neg_samples[-2000:], neg_labels[-2000:]
+    train_pos_samples, train_pos_labels = pos_samples[:18000], pos_labels[:18000]
+    test_pos_samples, test_pos_labels = pos_samples[-2000:], pos_labels[-2000:]
     # combine tensors into datasets.
     train_samples = torch.vstack([train_neg_samples, train_pos_samples])
     train_labels = torch.cat([train_neg_labels, train_pos_labels])
@@ -181,7 +181,7 @@ def get_data_loaders(
     train_val_data, test_data = None, None
     start_time = time.time()
 
-    print(f"Loading dataset...")
+    print(f"Loading dataset {dataset}...")
     num_classes = -1
     if dataset == "cifar10":
         train_val_data, test_data = load_cifar10(depth)
@@ -202,5 +202,5 @@ def get_data_loaders(
         val_loader = None
     train_loader = DataLoader(train_data, batch_size=batchsize, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batchsize, shuffle=False)
-    print(f"Dataset loaded in {time.time() - start_time}s")
+    print(f"Dataset loaded in {round(time.time() - start_time, 2)}s")
     return num_classes, train_data[0][0].shape, train_loader, val_loader, test_loader

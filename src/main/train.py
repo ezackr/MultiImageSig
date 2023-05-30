@@ -3,6 +3,7 @@ import argparse
 from tqdm.auto import tqdm
 import os
 from tqdm import tqdm
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -67,6 +68,10 @@ def train(
               f"Eval F1={round(train_accuracies[-1][1], 4)}. "
               f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
     print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
+    best_epoch = np.argmax(np.array(train_accuracies), axis=0)[0]
+    print(f"Best model was at epoch={best_epoch+1} "
+          f"with Accuracy={train_accuracies[best_epoch][0]} "
+          f"and F1={train_accuracies[best_epoch][1]}")
     return train_losses
 
 
@@ -120,10 +125,10 @@ def run_main():
         choices=["cifar10", "concretecracks"]
     )
     arg_parser.add_argument("-d", "--depth", help="Signature transform depth", default=4, type=int)
-    arg_parser.add_argument("-b", "--batchsize", help="Training batch size", default=64, type=int)
-    arg_parser.add_argument("-n", "--epochs", help="Number of epochs", default=10, type=int)
-    arg_parser.add_argument("-lr", "--learning-rate", help="Learning rate", default=0.01, type=float)
-    arg_parser.add_argument("-w", "--weight-decay", help="Weight decay", default=0.05, type=float)
+    arg_parser.add_argument("-b", "--batchsize", help="Training batch size", default=3000, type=int)
+    arg_parser.add_argument("-n", "--epochs", help="Number of epochs", default=300, type=int)
+    arg_parser.add_argument("-lr", "--learning-rate", help="Learning rate", default=0.001, type=float)
+    arg_parser.add_argument("-w", "--weight-decay", help="Weight decay", default=0.0001, type=float)
     arg_parser.add_argument(
         "-chkpts",
         "--checkpoints-path",
