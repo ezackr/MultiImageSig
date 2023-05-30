@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, AttentionEncoder, FC
-from src.main.util import checkpoints, get_data_loaders, metrics
+from src.main.util import checkpoints, get_data_loaders, metrics, flops_and_params
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -21,12 +21,12 @@ def evaluate(
     model.to(device)
 
     # Load from checkpoint
-    print(f"Loading checkpoint {checkpoint_name_path}")
+    print(f"Loading checkpoint to evaluate model on from: {checkpoint_name_path}")
     checkpoints.load_checkpoint(None, model, checkpoint_name_path)
 
-    print("Eval accuracy: ", metrics(model, eval_loader, device))
-    # print("Test accuracy: ", accuracy(model, test_loader, device))
-
+    acc, f1 = metrics(model, eval_loader, device)
+    print("Eval accuracy: ", acc)
+    print("Eval F1: ", f1)
 
 def main(model_type: str, dataset: str, depth: int, checkpoint_name: str, checkpoints_path: str):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
@@ -46,7 +46,11 @@ def main(model_type: str, dataset: str, depth: int, checkpoint_name: str, checkp
     checkpoints_full_path = os.path.join(os.path.join(base_path, checkpoints_path), checkpoint_name)
 
     print(f"Evaluating model {model_type}")
-    # Train model
+    flops, params = flops_and_params(model, next(iter(train_loader))[0][0].shape, num_classes)
+    print(f"Number of parameters: {params}")
+    print(f"Number of FLOPs: {flops}")
+
+    # Evaluate the model
     evaluate(
         model,
         eval_loader,

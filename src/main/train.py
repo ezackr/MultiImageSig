@@ -10,7 +10,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, AttentionEncoder, FC
-from src.main.util import checkpoints, get_data_loaders, metrics, flops_and_params
+from src.main.util import checkpoints, get_data_loaders, metrics
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -33,7 +33,7 @@ def train(
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load from best checkpoint
-    start_epoch = -1
+    start_epoch = 0
     if initial_checkpoint_name is not None:
         print(f"Loading initial checkpoint from {initial_checkpoint_name}")
         start_epoch = checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
@@ -90,10 +90,6 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
         os.makedirs(checkpoints_full_path)
 
     print(f"Training model {model_type}")
-
-    flops, params = flops_and_params(model, next(iter(train_loader))[0][0].shape, num_classes)
-    print(f"Number of parameters: {params}")
-    print(f"Number of FLOPs: {flops}")
 
     # Train model
     train(
