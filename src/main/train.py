@@ -10,7 +10,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, AttentionEncoder, FC
-from src.main.util import checkpoints, get_data_loaders, accuracy
+from src.main.util import checkpoints, get_data_loaders, metrics, flops_and_params
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -33,14 +33,16 @@ def train(
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load from best checkpoint
+    start_epoch = -1
     if initial_checkpoint_name is not None:
         print(f"Loading initial checkpoint from {initial_checkpoint_name}")
-        checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
+        start_epoch = checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
 
     train_losses = []
     train_accuracies = []
     start_time = time.time()
-    for epoch in range(epochs):
+    for epoch in range(start_epoch, epochs+start_epoch+1):
+        print(f"Epoch {epoch + 1} of {epochs+start_epoch+1}.")
         epoch_start_time = time.time()
         model.train()
         total_loss = 0.0
@@ -56,13 +58,13 @@ def train(
 
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
-        train_accuracies.append(accuracy(model, val_loader, device))
+        train_accuracies.append(metrics(model, val_loader, device))
         if checkpoints_path is not None:
             checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1, depth)
-            checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
-        print(f"Epoch {epoch + 1}. "
-              f"Train Loss={round(train_losses[-1], 4)}. "
-              f"Validation Accuracy={round(train_accuracies[-1], 4)}. "
+            checkpoints.save_checkpoint(optimizer, model, epoch+1, checkpoint_name)
+        print(f"\nTrain Loss={round(train_losses[-1], 4)}. "
+              f"Eval Accuracy={round(train_accuracies[-1][0], 4)}. "
+              f"Eval F1={round(train_accuracies[-1][1], 4)}. "
               f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
     print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
     return train_losses
@@ -76,9 +78,9 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
     # Initialize model
     model = None
     if model_type == "fc":
-        model = FC(input_shape)
+        model = FC(input_shape, num_classes=num_classes)
     elif model_type == "cnn":
-        model = CNN(input_shape)
+        model = CNN(input_shape, num_classes=num_classes)
     elif model_type == "attn":
         model = AttentionEncoder(input_shape, num_classes=num_classes)
 
@@ -88,6 +90,11 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
         os.makedirs(checkpoints_full_path)
 
     print(f"Training model {model_type}")
+
+    flops, params = flops_and_params(model, next(iter(train_loader))[0][0].shape, num_classes)
+    print(f"Number of parameters: {params}")
+    print(f"Number of FLOPs: {flops}")
+
     # Train model
     train(
         model,

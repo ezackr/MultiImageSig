@@ -3,7 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
 from typing import Tuple
-import flopth
+from ptflops import get_model_complexity_info
 
 
 def metrics(model: nn.Module, dataset_loader: DataLoader, device: torch.device) -> Tuple[float, float]:
@@ -28,16 +28,20 @@ def metrics(model: nn.Module, dataset_loader: DataLoader, device: torch.device) 
             y_true = torch.cat((y_true, labels))
             y_pred = torch.cat((y_pred, predicted))
     correct = (y_pred == y_true).sum().item()
-    f1 = f1_score(y_true, y_pred, average='micro')
+    f1 = f1_score(y_true, y_pred, average='macro')
     accuracy = correct / total
     return accuracy, f1
 
 
-def flops_and_params(model: nn.Module, input_size: torch.Tensor):
+def flops_and_params(model: nn.Module, input_size: torch.Tensor, num_classes: int):
     """
     Returns tuple of FLOPs and number of parameters in model, given inputs of size input_size
     :param model:
     :param input_size:
     :return:
     """
-    return flopth.flopth(model, in_size=input_size)
+    net = model.__class__(input_size, num_classes=num_classes)
+    macs, params = get_model_complexity_info(net, tuple(input_size), as_strings=False,
+                                             print_per_layer_stat=False, verbose=False)
+    flops = 2*macs  # approximately
+    return flops, params
