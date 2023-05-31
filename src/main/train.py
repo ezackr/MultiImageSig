@@ -3,7 +3,7 @@ import argparse
 from tqdm.auto import tqdm
 import os
 from tqdm import tqdm
-from sklearn.metrics import f1_score
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -11,7 +11,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, AttentionEncoder, FC, ResNet
-from src.main.util import checkpoints, get_data_loaders, accuracy
+from src.main.util import checkpoints, get_data_loaders, metrics
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -25,6 +25,7 @@ def train(
         epochs: int,
         learning_rate: float,
         weight_decay: float,
+        depth: int,
         initial_checkpoint_name: str = None,
         checkpoints_path: str = None
 ):
@@ -33,14 +34,16 @@ def train(
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load from best checkpoint
+    start_epoch = 0
     if initial_checkpoint_name is not None:
         print(f"Loading initial checkpoint from {initial_checkpoint_name}")
-        checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
+        start_epoch = checkpoints.load_checkpoint(optimizer, model, os.path.join(checkpoints_path, initial_checkpoint_name))
 
     train_losses = []
     train_accuracies = []
     start_time = time.time()
-    for epoch in range(epochs):
+    for epoch in range(start_epoch, epochs+start_epoch+1):
+        print(f"Epoch {epoch + 1} of {epochs+start_epoch+1}.")
         epoch_start_time = time.time()
         model.train()
         total_loss = 0.0
@@ -56,28 +59,33 @@ def train(
 
             total_loss += loss.item()
         train_losses.append(total_loss / len(train_loader))
-        train_accuracies.append(accuracy(model, val_loader, device))
+        train_accuracies.append(metrics(model, val_loader, device))
         if checkpoints_path is not None:
-            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1)
-            checkpoints.save_checkpoint(optimizer, model, checkpoint_name)
-        print(f"Epoch {epoch + 1}. "
-              f"Train Loss={round(train_losses[-1], 4)}. "
-              f"Validation Accuracy={round(train_accuracies[-1], 4)}. "
+            checkpoint_name = checkpoints.generate_checkpoint_name(checkpoints_path, model, epoch+1, depth)
+            checkpoints.save_checkpoint(optimizer, model, epoch+1, checkpoint_name)
+        print(f"\nTrain Loss={round(train_losses[-1], 4)}. "
+              f"Eval Accuracy={round(train_accuracies[-1][0], 4)}. "
+              f"Eval F1={round(train_accuracies[-1][1], 4)}. "
               f"Total Time={round((time.time() - epoch_start_time) / 60, 2)}m")
     print(f"Total training time={round((time.time() - start_time) / 60, 2)}m")
+    best_epoch = np.argmax(np.array(train_accuracies), axis=0)[0]
+    print(f"Best model was at epoch={best_epoch+1} "
+          f"with Accuracy={train_accuracies[best_epoch][0]} "
+          f"and F1={train_accuracies[best_epoch][1]}")
     return train_losses
 
 
 def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_path: str, *args, **kwargs):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
-    num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize)
+    num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, batchsize, False)
+    val_loader = test_loader  # Skip creating train/val split since we don't tune hyperparams
 
     # Initialize model
     model = None
     if model_type == "fc":
-        model = FC(input_shape)
+        model = FC(input_shape, num_classes=num_classes)
     elif model_type == "cnn":
-        model = CNN(input_shape)
+        model = CNN(input_shape, num_classes=num_classes)
     elif model_type == "attn":
         model = AttentionEncoder(input_shape, num_classes=num_classes)
     elif model_type == "res":
@@ -96,6 +104,7 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
         val_loader,
         *args,
         checkpoints_path=checkpoints_full_path,
+        depth=depth,
         **kwargs
     )
 
@@ -117,10 +126,10 @@ def run_main():
         choices=["cifar10", "concretecracks"]
     )
     arg_parser.add_argument("-d", "--depth", help="Signature transform depth", default=4, type=int)
-    arg_parser.add_argument("-b", "--batchsize", help="Training batch size", default=64, type=int)
-    arg_parser.add_argument("-n", "--epochs", help="Number of epochs", default=10, type=int)
-    arg_parser.add_argument("-lr", "--learning-rate", help="Learning rate", default=0.01, type=float)
-    arg_parser.add_argument("-w", "--weight-decay", help="Weight decay", default=0.05, type=float)
+    arg_parser.add_argument("-b", "--batchsize", help="Training batch size", default=3000, type=int)
+    arg_parser.add_argument("-n", "--epochs", help="Number of epochs", default=300, type=int)
+    arg_parser.add_argument("-lr", "--learning-rate", help="Learning rate", default=0.001, type=float)
+    arg_parser.add_argument("-w", "--weight-decay", help="Weight decay", default=0.0001, type=float)
     arg_parser.add_argument(
         "-chkpts",
         "--checkpoints-path",
