@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, AttentionEncoder, FC
-from src.main.util import checkpoints, get_data_loaders, accuracy
+from src.main.util import checkpoints, get_data_loaders, metrics, flops_and_params
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -15,42 +15,45 @@ base_path: str = os.path.dirname(__file__).rstrip(os.path.normpath("/src/main/tr
 
 def evaluate(
         model: nn.Module,
-        val_loader: DataLoader,
-        test_loader: DataLoader,
+        eval_loader: DataLoader,
         checkpoint_name_path: str
 ):
     model.to(device)
 
     # Load from checkpoint
-    print(f"Loading checkpoint {checkpoint_name_path}")
+    print(f"Loading checkpoint to evaluate model on from: {checkpoint_name_path}")
     checkpoints.load_checkpoint(None, model, checkpoint_name_path)
 
-    print("Validation accuracy: ", accuracy(model, val_loader, device))
-    print("Test accuracy: ", accuracy(model, test_loader, device))
-
+    acc, f1 = metrics(model, eval_loader, device)
+    print("Eval accuracy: ", acc)
+    print("Eval F1: ", f1)
 
 def main(model_type: str, dataset: str, depth: int, checkpoint_name: str, checkpoints_path: str):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
-    num_classes, input_shape, _, val_loader, test_loader = get_data_loaders(dataset, depth, 64)
+    num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, 32, False)
+    eval_loader = test_loader  # Skip creating train/val split since we don't tune hyperparams
 
     # Initialize model
     model = None
     if model_type == "fc":
-        model = FC(input_shape)
+        model = FC(input_shape, num_classes=num_classes)
     elif model_type == "cnn":
-        model = CNN(input_shape)
+        model = CNN(input_shape, num_classes=num_classes)
     elif model_type == "attn":
-        model = AttentionEncoder(input_shape[1])
+        model = AttentionEncoder(input_shape, num_classes=num_classes)
 
     # Setup checkpoints path, if it doesn't exist
-    checkpoints_full_path = os.path.join(base_path, checkpoints_path, checkpoint_name)
+    checkpoints_full_path = os.path.join(os.path.join(base_path, checkpoints_path), checkpoint_name)
 
-    print(f"Training model {model_type}")
-    # Train model
+    print(f"Evaluating model {model_type}")
+    flops, params = flops_and_params(model, next(iter(train_loader))[0][0].shape, num_classes)
+    print(f"Number of parameters: {params}")
+    print(f"Number of FLOPs: {flops}")
+
+    # Evaluate the model
     evaluate(
         model,
-        val_loader,
-        test_loader,
+        eval_loader,
         checkpoints_full_path
     )
 

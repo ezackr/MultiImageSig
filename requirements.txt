@@ -7,3 +7,4 @@ torch
 torchvision~=0.15.2
 tqdm~=4.65.0
 pillow~=9.5.0
+flopth

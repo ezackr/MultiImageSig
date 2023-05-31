@@ -12,11 +12,13 @@ class CNN(nn.Module):
     def __init__(self, input_dim: Tuple[int, int], hidden_n: int = 50, num_classes: int = 10):
         super(CNN, self).__init__()
         # Input has dimension (N, I1, I2)
-        self.conv1 = nn.Conv1d(input_dim[0], 32, kernel_size=3, padding=1)  # (N, I1, I2) -> (N, 32, I2)
-        i3 = math.floor((input_dim[1]-3)/3+1)                               # max-pooling (N, 32, I2) -> (N, 32, I3)
-        self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)            # (N, 32, I3) -> (N, 64, I3)
-        i4 = math.floor((i3-3)/3+1)                                         # max-pooling (N, 64, I3) -> (N, 64, I4)
-        self.fc1 = nn.Linear(64 * i4, hidden_n)                             # (N, 64, I4) -> (N, 64*I4)
+        self.conv1 = nn.Conv1d(input_dim[0], 32, kernel_size=3, padding=0, dilation=1)  # (N, I1, I2) -> (N, 32, I3)
+        i3 = math.floor((input_dim[1]+2*0-1*(3-1)-1)/1 + 1)  # after conv1d
+        i4 = math.floor((i3-3)/3+1)  # max-pooling (N, 32, I3) -> (N, 32, I4)
+        self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=0, dilation=1)            # (N, 32, I4) -> (N, 64, I5)
+        i5 = math.floor((i4+2*0-1*(3-1)-1)/1 + 1)  # after conv1d
+        i6 = math.floor((i5-3)/3+1)                                         # max-pooling (N, 64, I5) -> (N, 64, I6)
+        self.fc1 = nn.Linear(64 * i6, hidden_n)                             # (N, 64, I6) -> (N, 64*I6)
         self.fc2 = nn.Linear(hidden_n, num_classes)
 
     def forward(self, x: torch.tensor):
@@ -31,5 +33,5 @@ class CNN(nn.Module):
         x = F.relu(x)
         x = F.dropout(x, 0.4)
         x = self.fc2(x)
-        out = F.log_softmax(x, dim=1)
+        out = F.softmax(x, dim=1)
         return out
