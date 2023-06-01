@@ -28,6 +28,7 @@ def evaluate(
     print("Eval accuracy: ", acc)
     print("Eval F1: ", f1)
 
+
 def main(model_type: str, dataset: str, depth: int, checkpoint_name: str, checkpoints_path: str):
     # Load dataset, split into train/validation/test sets, and create DataLoaders.
     num_classes, input_shape, train_loader, val_loader, test_loader = get_data_loaders(dataset, depth, 32, False)
