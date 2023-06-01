@@ -18,7 +18,7 @@ In addition, the root directory needs to be added to the Python path. For exampl
 ```
 export PYTHONPATH="${PYTHONPATH}:$PWD"
 ```
-In addition, to train on the concrete cracks dataset, download and unzip the concrete cracks dataset from [Mendeley](https://data.mendeley.com/datasets/5y9wdsg2zt/2).
+In addition, to train on the concrete cracks dataset, download and unzip the concrete cracks dataset as linked under **Datasets** below.
 
 ## Usage
 ### Training a Model
