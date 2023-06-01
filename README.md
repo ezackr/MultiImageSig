@@ -11,12 +11,14 @@ This repository has the following layout:
 - ``util``: general-purpose utility methods.
 
 ## Setup
-The code base was designed to be cross-compatible for both Windows and UNIX-based operating systems. The requirements for this project are stored in `requirements.txt` and can be installed with ``pip install -r requirements.txt``
+The code base was designed to be cross-compatible for both Windows and UNIX-based operating systems. The requirements for this project are stored in `requirements.txt` and can be installed with 
+```pip install -r requirements.txt```
 
 In addition, the root directory needs to be added to the Python path. For example, this can be done with the following command in `bash` from the root directory of the project:
 ```
 export PYTHONPATH="${PYTHONPATH}:$PWD"
 ```
+In addition, to train on the concrete cracks dataset, download and unzip the concrete cracks dataset from [Mendeley](https://data.mendeley.com/datasets/5y9wdsg2zt/2).
 
 ## Usage
 ### Training a Model
@@ -49,7 +51,7 @@ usage: evaluate.py [-h] -m {fc,cnn,attn} -ds {cifar10,concretecracks}
 
 As an example, to evaluate a CNN model trained on concrete cracks, with a checkpoint named `chkpt-CNN-depth-4-epoch-14.pt`, stored in the folder `checkpoints/concretecracks/cnn/` (relative to the project root directory), with signature transformations of depth 4:
 ```
-python src/main/train.py -m cnn -ds concretecracks -d 4 -chkpts checkpoints/concretecracks/cnn/ -ichkpt chkpt-CNN-depth-4-epoch-14.pt
+python src/main/evaluate.py -m cnn -ds concretecracks -d 4 -chkpts checkpoints/concretecracks/cnn/ -ichkpt chkpt-CNN-depth-4-epoch-14.pt
 ```
 
 ### Test Suite
