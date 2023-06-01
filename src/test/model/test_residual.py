@@ -22,6 +22,6 @@ def test_resnet():
     x = torch.rand(size=(batch_size, sig_dim, num_sig))
 
     num_classes = 10
-    model = ResNet(in_channels=sig_dim, num_classes=num_classes)
+    model = ResNet(input_dim=(sig_dim, num_sig), num_classes=num_classes)
     y_hat = model(x)
     assert y_hat.shape == (batch_size, num_classes)
