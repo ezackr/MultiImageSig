@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 
@@ -71,12 +73,12 @@ def _make_layer(
 class ResNet(nn.Module):
     def __init__(
             self,
-            in_channels: int,
+            input_dim: Tuple[int, int],
             num_layers: int = 2,
             num_classes: int = 10
     ):
         super(ResNet, self).__init__()
-
+        _, in_channels = input_dim
         num_channels = 64
 
         self.conv1 = nn.Conv1d(

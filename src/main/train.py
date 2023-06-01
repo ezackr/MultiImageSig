@@ -11,7 +11,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from src.main.models import CNN, AttentionEncoder, FC, ResNet
-from src.main.util import checkpoints, get_data_loaders, metrics
+from src.main.util import checkpoints, get_data_loaders, metrics, flops_and_params
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -89,7 +89,7 @@ def main(model_type: str, depth: int, batchsize: int, dataset: str, checkpoints_
     elif model_type == "attn":
         model = AttentionEncoder(input_shape, num_classes=num_classes)
     elif model_type == "res":
-        model = ResNet(in_channels=input_shape[1], num_classes=num_classes)
+        model = ResNet(input_shape, num_classes=num_classes)
 
     # Setup checkpoints path, if it doesn't exist
     checkpoints_full_path = os.path.join(base_path, checkpoints_path)
