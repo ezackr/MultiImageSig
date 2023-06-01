@@ -13,12 +13,44 @@ This repository has the following layout:
 ## Setup
 The code base was designed to be cross-compatible for both Windows and UNIX-based operating systems. The requirements for this project are stored in `requirements.txt` and can be installed with ``pip install -r requirements.txt``
 
-## Usage
-### Training & Storing a Model
+In addition, the root directory needs to be added to the Python path. For example, this can be done with the following command in `bash` from the root directory of the project:
+```
+export PYTHONPATH="${PYTHONPATH}:$PWD"
+```
 
+## Usage
+### Training a Model
+Training a model will train the supplied network according to the given parameters and store resulting checkpoints in the given directory.
+
+To train a model, refer to the following usage guide.
+```
+usage: train.py [-h] -m {fc,cnn,attn} -ds {cifar10,concretecracks} [-d DEPTH]
+                [-b BATCHSIZE] [-n EPOCHS] [-lr LEARNING_RATE]
+                [-w WEIGHT_DECAY] [-chkpts CHECKPOINTS_PATH]
+                [-ichkpt INITIAL_CHECKPOINT_NAME]
+```
+
+As an example, to train a CNN model on concrete cracks, with checkpoints stored in the folder `checkpoints/concretecracks/cnn/` (relative to the project root directory; this folder will be created if it doesn't exist), and depth 4 on the signature transformation with default epochs, learning rate, and weight decay:
+```
+python src/main/train.py -m cnn -ds concretecracks -d 4 -chkpts checkpoints/concretecracks/cnn/
+```
+
+Checkpoints will be stored in the directory provided, named according to the following convention:
+`chkpt-[MODEL_NAME]-depth-[DEPTH]-epoch-[CURRENT_EPOCH].pt`.
 
 ### Evaluating a Model
+Evaluation will compute the test accuracy and F1 score, as well as model parameters and FLOPs.
 
+To evaluate a model given a checkpoint file used during training, refer to the following usage guide to change further parameters for evaluation. Note that these parameters are the same as for train, without the specific training parameters.
+```
+usage: evaluate.py [-h] -m {fc,cnn,attn} -ds {cifar10,concretecracks}
+                   [-d DEPTH] -chkpts CHECKPOINTS_PATH -ichkpt CHECKPOINT_NAME
+```
+
+As an example, to evaluate a CNN model trained on concrete cracks, with a checkpoint named `chkpt-CNN-depth-4-epoch-14.pt`, stored in the folder `checkpoints/concretecracks/cnn/` (relative to the project root directory), with signature transformations of depth 4:
+```
+python src/main/train.py -m cnn -ds concretecracks -d 4 -chkpts checkpoints/concretecracks/cnn/ -ichkpt chkpt-CNN-depth-4-epoch-14.pt
+```
 
 ### Test Suite
 Unit tests are stored under `src/test`.
